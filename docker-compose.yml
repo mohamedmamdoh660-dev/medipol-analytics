@@ -9,9 +9,11 @@ services:
         VITE_OLLAMA_URL: ${VITE_OLLAMA_URL}
         VITE_OLLAMA_MODEL: ${VITE_OLLAMA_MODEL:-qwen2.5:14b}
     environment:
-      # Server-side ONLY (never reaches the browser). Powers the admin endpoints.
+      # Server-side ONLY (never reaches the browser).
       SUPABASE_URL: ${VITE_SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
       SUPABASE_SERVICE_ROLE: ${SUPABASE_SERVICE_ROLE}
+      OLLAMA_URL: ${VITE_OLLAMA_URL}
     ports:
       # host → container. The Cloudflare tunnel points the subdomain → localhost:8090
       - "${PORT:-8090}:80"

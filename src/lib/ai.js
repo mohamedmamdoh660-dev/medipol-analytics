@@ -1,10 +1,12 @@
-// Local self-hosted LLM (Ollama) client. The model only translates a natural
-// language question into a small query spec — all computation stays in JS.
+// Local self-hosted LLM (Ollama) client. Calls go through our own backend
+// proxy (/api/ai/chat) so the browser never talks to Ollama directly — this
+// avoids CORS and keeps the Ollama endpoint internal.
+import { supabase } from '../supabase.js'
 
-const BASE = import.meta.env.VITE_OLLAMA_URL
+const AI_URL = `${import.meta.env.BASE_URL}api/ai/chat`
 const MODEL = import.meta.env.VITE_OLLAMA_MODEL || 'qwen2.5:14b'
 
-export const aiConfigured = !!BASE
+export const aiConfigured = true
 
 const FIELDS = {
   country: 'Country name, e.g. "Egypt", "Afghanistan", "Pakistan"',
@@ -49,9 +51,13 @@ async function chat(messages, { json = false, timeout = 120000 } = {}) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), timeout)
   try {
-    const res = await fetch(`${BASE}/api/chat`, {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(AI_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token || ''}`,
+      },
       body: JSON.stringify({
         model: MODEL,
         messages,

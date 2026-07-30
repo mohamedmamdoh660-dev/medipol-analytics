@@ -11,6 +11,8 @@ const DIST = path.join(__dirname, '..', 'dist')
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE
+const ANON = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+const OLLAMA_URL = (process.env.OLLAMA_URL || process.env.VITE_OLLAMA_URL || '').replace(/\/$/, '')
 const PORT = Number(process.env.PORT) || 80
 
 if (!SUPABASE_URL || !SERVICE_ROLE) {
@@ -21,6 +23,25 @@ if (!SUPABASE_URL || !SERVICE_ROLE) {
 const admin = SUPABASE_URL && SERVICE_ROLE
   ? createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { autoRefreshToken: false, persistSession: false } })
   : null
+// Public client — validates a caller's session token for the AI proxy.
+const pub = SUPABASE_URL && ANON
+  ? createClient(SUPABASE_URL, ANON, { auth: { autoRefreshToken: false, persistSession: false } })
+  : admin
+
+// Any signed-in user (used by the AI proxy).
+async function requireUser(req, res, next) {
+  if (!pub) return res.status(503).json({ error: 'backend not configured' })
+  try {
+    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '')
+    if (!token) return res.status(401).json({ error: 'missing token' })
+    const { data: { user }, error } = await pub.auth.getUser(token)
+    if (error || !user) return res.status(401).json({ error: 'invalid session' })
+    req.caller = user
+    next()
+  } catch (e) {
+    res.status(500).json({ error: String(e?.message || e) })
+  }
+}
 
 const app = express()
 app.use(express.json())
@@ -132,6 +153,22 @@ app.get('/api/admin/accounts', requireAdmin, async (_req, res) => {
     res.json({ accounts: map })
   } catch (e) {
     res.status(500).json({ error: String(e?.message || e) })
+  }
+})
+
+// --- AI proxy: forward chat to Ollama server-side (no browser CORS) ---------
+app.post('/api/ai/chat', requireUser, async (req, res) => {
+  if (!OLLAMA_URL) return res.status(503).json({ error: 'AI endpoint not configured' })
+  try {
+    const upstream = await fetch(`${OLLAMA_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...req.body, stream: false }),
+    })
+    const text = await upstream.text()
+    res.status(upstream.status).type('application/json').send(text)
+  } catch (e) {
+    res.status(502).json({ error: `AI upstream error: ${String(e?.message || e)}` })
   }
 })
 
