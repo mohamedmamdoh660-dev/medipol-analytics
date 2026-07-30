@@ -7,8 +7,9 @@ RUN npm ci
 
 COPY . .
 
-# Vite inlines these at build time. BASE_PATH controls the sub-path.
-ARG BASE_PATH=/analytics
+# Vite inlines these at build time. BASE_PATH is the base ("/" = root domain;
+# set to /analytics only if serving under a sub-path).
+ARG BASE_PATH=/
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
 ARG VITE_OLLAMA_URL
@@ -24,11 +25,9 @@ RUN npm run build
 # ---------- serve stage ----------
 FROM nginx:1.27-alpine
 
-# Same sub-path at runtime (nginx renders the template with envsubst).
-ENV BASE_PATH=/analytics
-
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
 EXPOSE 80
-# nginx image's entrypoint runs envsubst on templates, then starts nginx.
+# nginx serves the SPA at root on :80. Publish it on host port 8090 (Coolify
+# Ports Mapping "8090:80") so the Cloudflare tunnel can reach http://localhost:8090.

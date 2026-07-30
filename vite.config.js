@@ -1,11 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// The app is served under a sub-path (default /analytics). Set BASE_PATH to change
-// it; dev, preview and build all use the same base so local testing matches prod.
-// For root-path local dev, run:  BASE_PATH=/ npm run dev
-const raw = process.env.BASE_PATH ?? '/analytics'
-const BASE = raw === '/' ? '/' : '/' + raw.replace(/^\/+|\/+$/g, '') + '/'
+// Default: served at the ROOT of its own (sub)domain, e.g.
+// https://analytics-automation.medipol.edu.tr
+// To serve under a sub-path instead, set BASE_PATH=/analytics (build-time).
+const raw = process.env.BASE_PATH ?? '/'
+const BASE = raw === '/' || raw === '' ? '/' : '/' + raw.replace(/^\/+|\/+$/g, '') + '/'
 
 export default defineConfig({
   base: BASE,
