@@ -1,0 +1,31 @@
+# Serves the built SPA under ${BASE_PATH} (e.g. /analytics). The nginx image
+# renders this template with envsubst on start, substituting ${BASE_PATH}.
+server {
+  listen 80;
+  server_name _;
+
+  # Health check for the Cloudflare tunnel
+  location = ${BASE_PATH}/health {
+    default_type text/plain;
+    return 200 'ok';
+  }
+
+  # Bare sub-path → trailing slash
+  location = ${BASE_PATH} {
+    return 301 ${BASE_PATH}/;
+  }
+
+  # Hashed build assets — safe to cache hard
+  location ${BASE_PATH}/assets/ {
+    alias /usr/share/nginx/html/assets/;
+    try_files $uri =404;
+    expires 30d;
+    add_header Cache-Control "public, immutable";
+  }
+
+  # App + public files, with SPA fallback to index.html
+  location ${BASE_PATH}/ {
+    alias /usr/share/nginx/html/;
+    try_files $uri $uri/ ${BASE_PATH}/index.html;
+  }
+}

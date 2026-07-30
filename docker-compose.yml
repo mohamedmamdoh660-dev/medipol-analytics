@@ -1,0 +1,16 @@
+services:
+  analytics:
+    build:
+      context: .
+      args:
+        BASE_PATH: ${BASE_PATH:-/analytics}
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_OLLAMA_URL: ${VITE_OLLAMA_URL}
+        VITE_OLLAMA_MODEL: ${VITE_OLLAMA_MODEL:-qwen2.5:14b}
+    environment:
+      BASE_PATH: ${BASE_PATH:-/analytics}
+    ports:
+      # host → container. App reachable at http://localhost:${PORT}${BASE_PATH}
+      - "${PORT:-8098}:80"
+    restart: unless-stopped
