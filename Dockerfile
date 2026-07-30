@@ -1,5 +1,5 @@
 # ---------- build stage ----------
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
@@ -22,7 +22,7 @@ ENV BASE_PATH=$BASE_PATH \
 RUN npm run build
 
 # ---------- runtime stage (Node serves the SPA + secure admin API) ----------
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
 
 COPY package*.json ./
