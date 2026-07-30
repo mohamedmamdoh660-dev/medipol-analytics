@@ -28,7 +28,7 @@ export default function Login() {
     const w = window.innerWidth, h = window.innerHeight
     const dx = (e.clientX / w - 0.5)
     const dy = (e.clientY / h - 0.5)
-    if (bgRef.current) bgRef.current.style.transform = `scale(1.02) translate(${dx * -14}px, ${dy * -14}px)`
+    if (bgRef.current) bgRef.current.style.transform = `translate(${dx * -12}px, ${dy * -12}px)`
     if (contentRef.current) contentRef.current.style.transform = `translate(${dx * 10}px, ${dy * 10}px)`
   }
 
@@ -52,7 +52,6 @@ export default function Login() {
       <div className="login-bg-img" ref={bgRef} />
       <div className="login-bg-grad" />
       <div className="login-aurora"><span /><span /><span /></div>
-      <div className="login-watermark" />
 
       <div className="login-topbar">
         <div className="lang-switch">

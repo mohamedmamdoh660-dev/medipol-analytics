@@ -157,9 +157,8 @@ button:disabled {
 .login-bg-img {
   position: absolute;
   inset: -20px;
-  background: var(--img-campus) center 30% / cover no-repeat;
+  background: var(--img-campus) center / cover no-repeat;
   background-color: #05091a;
-  transform: scale(1.02);
   transition: transform 0.25s ease-out;
   will-change: transform;
 }
