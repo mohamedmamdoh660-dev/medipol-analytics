@@ -44,7 +44,7 @@ npm run preview      # → http://localhost:4173/analytics
 
 ```bash
 npm install
-npm run dev          # → http://localhost:5173  (dev runs at root for convenience)
+npm run dev          # → http://localhost:5173/analytics  (set BASE_PATH=/ for root)
 ```
 
 ---
