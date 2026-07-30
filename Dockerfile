@@ -7,8 +7,7 @@ RUN npm ci
 
 COPY . .
 
-# Vite inlines these at build time. BASE_PATH is the base ("/" = root domain;
-# set to /analytics only if serving under a sub-path).
+# Vite inlines these at build time. BASE_PATH="/" = served at the domain root.
 ARG BASE_PATH=/
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
@@ -22,12 +21,20 @@ ENV BASE_PATH=$BASE_PATH \
 
 RUN npm run build
 
-# ---------- serve stage ----------
-FROM nginx:1.27-alpine
+# ---------- runtime stage (Node serves the SPA + secure admin API) ----------
+FROM node:20-alpine AS runtime
+WORKDIR /app
 
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY package*.json ./
+RUN npm ci --omit=dev
 
+COPY --from=build /app/dist ./dist
+COPY server ./server
+
+# Runtime secrets (server-side ONLY — never exposed to the browser):
+#   SUPABASE_SERVICE_ROLE  → set in Coolify / .env
+#   SUPABASE_URL           → defaults to VITE_SUPABASE_URL if unset
+ENV PORT=80
 EXPOSE 80
-# nginx serves the SPA at root on :80. Publish it on host port 8090 (Coolify
-# Ports Mapping "8090:80") so the Cloudflare tunnel can reach http://localhost:8090.
+
+CMD ["node", "server/index.js"]
